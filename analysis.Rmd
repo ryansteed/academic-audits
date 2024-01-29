@@ -1,0 +1,171 @@
+---
+title: "Plots"
+author: "Ryan Steed"
+date: "2023-10-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r data}
+source("utils.R")
+# first run: `make academic-audit-studies.csv`
+academic = read.csv("academic-audit-studies.csv") %>%
+  mutate(
+    source = as.factor(source),
+    source_condensed = fct_collapse(source,
+      `Other ACM` = c(levels(source)[startsWith(levels(source), "ACMDL")]),
+      `Other non-ACM` = c("Other non-ACM", "ACL")
+    ),
+    audit_type_condensed = fct_reorg(audit_type_condensed, `Data Audit`="Data Audit", `Product/Model/Algo. Audit`="Case Study", `Ecosystem Audit`="Ecosystem", `Meta-Commentary`="Meta-Commentary"),
+    kwd_matches_audit = grepl("audit", abstract) | grepl("audit", title),
+    kwd_matches_accountability = grepl(
+      "accountability", abstract) | grepl("accountability", title
+    ),
+    kwd_matches_assurance = grepl("assurance", abstract) | grepl("assurance", title),
+    kwd_matches_case_study = grepl("case study", abstract) | grepl("case study", title),
+    kwd_matches_bias = grepl("bias", abstract) | grepl("bias", title),
+    kwd_matches_fairness = grepl("fairness", abstract) | grepl("fairness", title)
+  )
+```
+
+```{r counts}
+academic %>%
+  group_by(source) %>%
+  summarise(count = n())
+academic %>%
+  group_by(source_condensed) %>%
+  summarise(count = n())
+academic %>% summarise(count=n())
+academic %>%
+  group_by(source_detailed) %>%
+  summarise_at(vars(starts_with("kwd_matches")), sum)
+academic %>%
+  group_by(audit_type) %>%
+  summarise(count = n())
+```
+
+```{r time}
+counts = academic %>%
+  group_by(year, audit_type) %>%
+  summarize(count = n())
+ggplot(counts %>% filter(year > 2005), aes(x=year, y=count, color=audit_type)) +
+  geom_line()
+ggplot(counts %>% filter(year > 2017), aes(x=year, y=count, color=audit_type)) +
+  geom_line()
+```
+
+```{r type}
+ggplot(academic, aes(x=audit_type)) +
+  geom_bar() +
+  coord_flip()
+ggplot(academic, aes(x=source)) +
+  geom_bar() +
+  coord_flip()
+academic %>%
+  group_by(source_condensed) %>%
+  summarise(n=n())
+
+plot_bar(academic %>% mutate(audit_type_condensed = str_wrap_factor(audit_type_condensed, width=14, whitespace_only=F)), "year") + xlab("Year published")
+ggsave("plots/bar_time.pdf", dpi=300, width=4, height=4)
+
+plot_bar(academic %>% mutate(audit_type_condensed = str_wrap_factor(audit_type_condensed, width=14, whitespace_only=F)), "source_condensed") + xlab("Publication venue")
+ggsave("plots/bar_source.pdf", dpi=300, width=4, height=4)
+```
+
+```{r keywords}
+print(academic %>% summarise(na_abstract = sum(is.na(abstract)), na_keywords = sum(is.na(keywords))))
+
+words_abstract = get_words("abstract")
+grams_abstract = get_2grams("abstract")
+words_keywords = get_words("keywords")
+grams_keywords = get_2grams("keywords")
+
+words_abstract %>% count_words() %>% arrange(desc(n_papers)) %>%
+  write.csv(., file="keyword_analysis/abstract_1grams.csv")
+words_keywords %>% count_words() %>% arrange(desc(n_papers)) %>%
+  write.csv(., file="keyword_analysis/keywords_1grams.csv")
+grams_abstract %>% count_words() %>% arrange(desc(n_papers)) %>%
+  write.csv(., file="keyword_analysis/abstract_2grams.csv")
+grams_keywords %>% count_words() %>% arrange(desc(n_papers)) %>%
+  write.csv(., file="keyword_analysis/keywords_2grams.csv")
+
+terms_abstract = bind_rows(words_abstract, grams_abstract)
+terms_keywords = bind_rows(words_keywords, grams_keywords)
+
+terms_abstract %>% count_words() %>% arrange(desc(n_papers))
+terms_keywords %>% count_words() %>% arrange(desc(n_papers))
+terms_abstract %>% group_by(audit_type_condensed) %>% count_words() %>% slice_max(order_by=n_papers, n=20)
+  # write.csv(., file="keyword_analysis/abstract_audit-type_top10.csv")
+terms_keywords %>% group_by(audit_type_condensed) %>% count_words() %>% slice_max(order_by=n_papers, n=10)
+  # write.csv(., file="keyword_analysis/keywords_audit-type_top10.csv")
+```
+```{r keywords_selected}
+terms_abstract %>% count_words_selected() %>% arrange(desc(n_papers))
+terms_keywords %>% count_words_selected() %>% arrange(desc(n_papers))
+terms_abstract %>% group_by(audit_type_condensed) %>% count_words_selected() %>% slice_max(order_by=n_papers, n=20)
+  # write.csv(., file="keyword_analysis/abstract_audit-type_top10.csv")
+terms_keywords %>% group_by(audit_type_condensed) %>% count_words_selected() %>% slice_max(order_by=n_papers, n=10)
+  # write.csv(., file="keyword_analysis/keywords_audit-type_top10.csv")
+```
+## Keyword Tables
+```{r kwd_motivation}
+terms_keywords %>% count_words_selected(kwds_motivations_harms) %>% arrange(desc(n_papers)) %>%
+  filter(p_papers > 0.01) %>%
+  print_table()
+terms_abstract %>% count_words_selected(kwds_motivations_harms) %>% arrange(desc(n_papers)) %>% 
+  filter(p_papers > 0.05) %>%
+  print_table()
+```
+
+```{r kwd_target}
+terms_keywords %>% count_words_selected(kwds_targets) %>% arrange(desc(n_papers)) %>%
+  filter(p_papers > 0.01) %>%
+  print_table()
+terms_abstract %>% count_words_selected(kwds_targets) %>% arrange(desc(n_papers)) %>% 
+  filter(p_papers > 0.05) %>%
+  print_table()
+```
+```{r kwd_methods}
+terms_keywords %>% count_words_selected(kwds_methods) %>% arrange(desc(n_papers)) %>%
+  filter(p_papers > 0.01) %>%
+  print_table()
+terms_abstract %>% count_words_selected(kwds_methods) %>% arrange(desc(n_papers)) %>% 
+  filter(p_papers > 0.05) %>%
+  print_table()
+```
+
+## Keyword Grouped Tables
+```{r pivot}
+terms_keywords %>% group_by(audit_type_condensed) %>%
+  count_words_selected(kwds_motivations_harms) %>%
+  print_table_pivot(0.15)
+terms_abstract %>% group_by(audit_type_condensed) %>%
+  count_words_selected(kwds_motivations_harms) %>%
+  print_table_pivot(0.15)
+# terms_keywords %>% group_by(audit_type_condensed) %>%
+#   count_words_selected(kwds_motivations_harms) %>%
+#   slice_max(order_by=n_papers, n=5)
+# terms_abstract %>% group_by(audit_type_condensed) %>%
+#   count_words_selected(kwds_motivations_harms) %>% distinct(audit_type_condensed, n_papers_total)
+```
+
+```{r pivot-targets}
+terms_keywords %>% group_by(audit_type_condensed) %>%
+  count_words_selected(kwds_targets) %>%
+  print_table_pivot(0.1)
+terms_abstract %>% group_by(audit_type_condensed) %>%
+  count_words_selected(kwds_targets) %>%
+  print_table_pivot(0.1)
+```
+
+```{r pivot-methods}
+terms_keywords %>% group_by(audit_type_condensed) %>%
+  count_words_selected(kwds_methods) %>%
+  print_table_pivot(0.1)
+terms_abstract %>% group_by(audit_type_condensed) %>%
+  count_words_selected(kwds_methods) %>%
+  print_table_pivot(0.1)
+```
