@@ -1,7 +1,7 @@
 # Academic Audit Studies
 Author: Abeba Birhane, Ryan Steed, Victor Ojewale, Briana Vecchione, and Inioluwa Deborah Raji
 
-Data and replication code for "AI Auditing: The Broken Bus on the Road to AI Accountability", SatML 2024.
+Data and replication code for our paper ["AI Auditing: The Broken Bus on the Road to AI Accountability"](https://arxiv.org/abs/2401.14462), SatML 2024.
 
 ## Contents
 - `academic_audit_studies.csv`: Cleaned dataset of academic audit studies, 2018-2022, used in our analysis (only the studies collected using the principled methods detailed in our paper).
