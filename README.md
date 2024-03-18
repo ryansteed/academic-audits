@@ -1,5 +1,7 @@
 # Academic Audit Studies
-Author: Abeba Birhane, Ryan Steed, Victor Ojewale, Briana Vecchione, and Inioluwa Deborah Raji
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+
+Authors: Abeba Birhane, Ryan Steed, Victor Ojewale, Briana Vecchione, and Inioluwa Deborah Raji
 
 Data and replication code for our paper ["AI Auditing: The Broken Bus on the Road to AI Accountability"](https://arxiv.org/abs/2401.14462), SatML 2024.
 
