@@ -33,16 +33,31 @@ papers = papers %>%
     source = fct_recode(source_detailed, 
       `ACL` = "[URL Match | Institution Match] ACL",
       FAccT = "ACMDL - FAccT",
-      AIES = "ACMDL - AIES"
+      AIES = "ACMDL - AIES",
+      Markup = "ACMDL - Markup",
+      Propublica = "ACMDL - Propublica"
     ),
     source = fct_collapse(source,
       `Other non-ACM` = c(levels(source)[startsWith(levels(source), "OAT")])
     ),
     audit_type_condensed = fct_collapse(
       audit_type, `Meta-Commentary` = c("Method", "Tool", "Meta-Commentary", "Critique")
-    )
+    ),
+    journal_series_institution = ifelse(source == "Markup", "Markup", journal_series_institution),
+    journal_series_institution = ifelse(source == "Propublica", "Propublica", journal_series_institution)
   ) %>%
   tibble::rowid_to_column("paper_id")
+
+all = papers %>%
+  select(
+    source, audit_type_condensed, authors, title, urls,
+    journal_series_institution, year, keywords, abstract, audit_type
+  ) %>%
+  arrange(source, year)
+all %>%
+  write.csv(., file = "all-audit-studies.csv")
+print("Wrote cleaned audit studies to `all-audit-studies.csv`, length:")
+print(nrow(all))
 
 academic = papers %>%
   # only papers resulting from principled search
@@ -57,3 +72,5 @@ academic %>%
   write.csv(., file = "academic-audit-studies.csv")
 print("Wrote cleaned academic audit studies to `academic-audit-studies.csv`, length:")
 print(nrow(academic))
+
+
