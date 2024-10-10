@@ -43,7 +43,7 @@ academic %>%
   group_by(source_detailed) %>%
   summarise_at(vars(starts_with("kwd_matches")), sum)
 academic %>%
-  group_by(audit_type) %>%
+  group_by(audit_type_condensed) %>%
   summarise(count = n())
 ```
 
@@ -58,7 +58,7 @@ ggplot(counts %>% filter(year > 2017), aes(x=year, y=count, color=audit_type)) +
 ```
 
 ```{r type}
-ggplot(academic, aes(x=audit_type)) +
+ggplot(academic, aes(x=audit_type_condensed)) +
   geom_bar() +
   coord_flip()
 ggplot(academic, aes(x=source)) +
@@ -68,11 +68,23 @@ academic %>%
   group_by(source_condensed) %>%
   summarise(n=n())
 
-plot_bar(academic %>% mutate(audit_type_condensed = str_wrap_factor(audit_type_condensed, width=14, whitespace_only=F)), "year") + xlab("Year published")
-ggsave("plots/bar_time.pdf", dpi=300, width=4, height=4)
+academic_formatted = academic %>%
+  group_by(audit_type_condensed) %>%
+  arrange(audit_type_condensed) %>% # preserve factor ordering
+  mutate(
+    audit_type_condensed = paste0(as.character(audit_type_condensed), "<br>*(N=", n(), ")*"),
+    audit_type_condensed = factor(audit_type_condensed, unique(audit_type_condensed)),
+    # audit_type_condensed = str_wrap_factor(
+    #   audit_type_condensed,
+    #   width=14, whitespace_only=F
+    # )
+  )
 
-plot_bar(academic %>% mutate(audit_type_condensed = str_wrap_factor(audit_type_condensed, width=14, whitespace_only=F)), "source_condensed") + xlab("Publication venue")
-ggsave("plots/bar_source.pdf", dpi=300, width=4, height=4)
+plot_bar(academic_formatted, "year") + xlab("Year published")
+ggsave("plots/bar_time_v2.pdf", dpi=300, width=5, height=4)
+
+plot_bar(academic_formatted, "source_condensed") + xlab("Publication venue")
+ggsave("plots/bar_source_v2.pdf", dpi=300, width=5, height=4)
 ```
 
 ```{r keywords}

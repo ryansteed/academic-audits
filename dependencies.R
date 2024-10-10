@@ -14,10 +14,10 @@ pacman::p_load(
   xtable
 )
 data("stop_words")
-pacman::p_install_gh("coolbutuseless/ggpattern")
+# pacman::p_install_gh("coolbutuseless/ggpattern")
 
-fct_reorg <- function(fac, ...) {
-  fct_recode(fct_relevel(fac, ...), ...)
+fct_reorg = function(fac, ...) {
+  fct_relevel(fct_recode(fac, ...), names(rlang::dots_list(...)))
 }
 str_wrap_factor <- function(x, ...) {
   levels(x) <- str_wrap(levels(x), ...)

@@ -38,12 +38,14 @@ plot_bar = function(df, x_col) {
     scale_y_continuous(expand=c(0, 0)) +
     pattern_theme("audit_type_condensed") +
     ylab("# audit studies") +
-    guides(
-      pattern=guide_legend(ncol=2)
-    ) +
     theme_classic() +
+    guides(
+      pattern=guide_legend(byrow=T)
+    ) +
     theme(
-      legend.position = "top",
+      # legend.position = "top",
+      legend.key.spacing.y = unit(0.2, "cm"),
+      legend.text = element_markdown(),
       axis.text.y = element_markdown()
     )
 }
